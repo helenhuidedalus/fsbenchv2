@@ -107,8 +107,38 @@ backend, and full benchmark output.
 | Script | Purpose |
 |---|---|
 | `bench/fs-bench.sh` | Core benchmark. Runs on any mounted filesystem. |
+| `bench/run-dedalus-fs.sh` | Build + mount dedalus-fs via FUSE + run bench. |
 | `bench/setup-s3files.sh` | Provision S3 Files (bucket, IAM, FS, mount target). |
 | `bench/setup-virtiofsd.sh` | Launch virtiofsd + DHV guest with passthrough. |
+
+## Running dedalus-fs
+
+dedalus-fs is a FUSE (Filesystem in Userspace) daemon that stores file
+data as content-addressed chunks in S3 and file metadata (names,
+permissions, sizes, timestamps) in a local SQLite database. The bench
+mounts it at `/mnt/dedalus-fs` via `/dev/fuse` and runs `fs-bench.sh`
+against that path. No VM, no snapshot bake, no guest-agent.
+
+Requires a `dm-workspace` clone (the Rust monorepo containing the
+storage daemon source) and AWS credentials for an S3 bucket with
+`Put/Get/DeleteObject` permissions.
+
+```bash
+cd fs-bench
+sudo bash bench/run-dedalus-fs.sh                    # build + mount + bench
+sudo bash bench/run-dedalus-fs.sh --skip-build       # reuse built binary
+sudo bash bench/run-dedalus-fs.sh --bucket my-bench  # override S3 bucket
+sudo bash bench/run-dedalus-fs.sh --unmount          # tear down
+```
+
+The script builds the `mount-helper` binary from the storage-daemon
+crate (`cargo build --features fusedev --bin mount-helper`) and mounts
+it at `/mnt/dedalus-fs`. Runtime layout:
+
+- **S3 bucket**: stores file data as 4 MiB content-addressed chunks
+- **SQLite**: stores metadata at `/tmp/sd-fuse-data/metadata.db`
+- **Foyer cache** (a hybrid RAM + disk cache library): caches hot
+  chunks at `/tmp/sd-fuse-cache` (1 GiB RAM, 10 GiB disk)
 
 ## References
 

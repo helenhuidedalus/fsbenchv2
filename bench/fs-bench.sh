@@ -31,7 +31,7 @@ now_ms() { date +%s%3N; }
 ms_since() { echo $(( $(now_ms) - $1 )); }
 
 COL="%-22s"
-sep() { printf '%0.s─' {1..78}; echo; }
+sep() { printf '%0.s=' {1..78}; echo; }
 
 hdr() {
     echo ""
