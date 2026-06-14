@@ -1,9 +1,62 @@
-# Filesystem Benchmark
+# fs-bench  v2
 
-Reproducible benchmarks measuring filesystem performance for cloud dev
-environment workloads. Tests metadata ops, rename/link/symlink, fsync,
-concurrent I/O, git ops, npm install, tar extraction, and fio across
-filesystem backends.
+Filesystem benchmark for cloud sandbox/dev-environment providers.
+
+Measures what a developer actually experiences inside a sandbox VM: metadata
+ops, rename/link/symlink, fsync latency, concurrent I/O, directory listing,
+npm install (base toolchain + AI agent packages reported separately), git
+clone/status, tar extraction, and fio. Results are columnar and
+machine-parseable. Also runs POSIX correctness suites (pjdfstest, xfstests).
+
+---
+
+## Quick start (v2 — provider API)
+
+```bash
+# Install provider SDKs
+pip install daytona e2b
+
+# Configure keys
+cp .env.example .env && $EDITOR .env
+
+# Run one provider
+bash run.sh daytona
+
+# Run multiple providers in parallel (all hit the same random window → fair)
+bash run.sh daytona e2b
+
+# Results in results/YYYY-MM-DD-<provider>.txt
+```
+
+## v2 Repository layout
+
+```
+run.sh              preflight → fan-out → collect → teardown
+run-one.sh          single-provider flow (create → exec → copy → destroy)
+providers/          thin SDK glue (daytona, e2b, modal stub, morph stub)
+bench/fs-bench.sh   orchestrator (perf suite + correctness suite)
+bench/lib.sh        shared helpers (now_ms, summarize, row, hdr, …)
+bench/perf/         00-wake … 90-fio — each implements run_test <target> <label> <N>
+bench/correctness/  pjdfstest + xfstests (run once, pass/skip/fail)
+vendor/             git submodules: pjdfstest, xfstests
+docs/               packages.md, methodology.md, correctness.md, providers.md
+scheduler/          random-delay.sh (CI fairness jitter)
+.github/workflows/  benchmark.yml (every 6h + random offset)
+results/            committed output files
+```
+
+See `docs/methodology.md` for full measurement methodology.  
+See `docs/providers.md` for per-provider SDK setup.
+
+---
+
+## Legacy — direct filesystem benchmark
+
+The scripts below pre-date the v2 provider model. They mount specific
+filesystems directly and call `bench/fs-bench.sh` with a path argument.
+They remain for reference but are not part of the v2 benchmark flow.
+
+
 
 ## Methodology
 

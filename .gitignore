@@ -1,3 +1,26 @@
 node_modules/
 *.tar.xz
 .DS_Store
+
+# Local secrets — never commit
+.env
+
+# Vendor build artifacts
+vendor/pjdfstest/pjdfstest
+vendor/pjdfstest/configure
+vendor/pjdfstest/config.h
+vendor/pjdfstest/config.h.in
+vendor/pjdfstest/config.log
+vendor/pjdfstest/config.status
+vendor/pjdfstest/aclocal.m4
+vendor/pjdfstest/autom4te.cache/
+vendor/pjdfstest/Makefile
+vendor/pjdfstest/.deps/
+
+vendor/xfstests/check.log
+vendor/xfstests/results/
+vendor/xfstests/*.o
+vendor/xfstests/src/*.o
+
+# Node temp dirs a partial run might leave
+.bench-npm-*/

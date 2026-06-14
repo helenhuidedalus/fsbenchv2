@@ -1,0 +1,54 @@
+name: fs-bench
+
+on:
+  schedule:
+    # Coarse fixed cadence: every 6 hours at minute 17 (avoids top-of-hour stampede).
+    # random-delay.sh adds a uniform 0–60 min jitter on top so actual start time
+    # is unpredictable and providers cannot pre-warm capacity for the slot.
+    - cron: '17 */6 * * *'
+  workflow_dispatch: {}   # manual trigger for testing
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: [daytona, e2b, modal, tensorlake]   # morph: fill in stub before adding
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive    # pulls vendor/pjdfstest and vendor/xfstests
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install provider SDKs
+        run: |
+          pip install daytona e2b modal tensorlake
+
+      - name: Randomize start (fairness)
+        run: bash scheduler/random-delay.sh 3600
+
+      - name: Run benchmark
+        env:
+          DAYTONA_API_KEY:    ${{ secrets.DAYTONA_API_KEY }}
+          E2B_API_KEY:        ${{ secrets.E2B_API_KEY }}
+          MODAL_TOKEN_ID:     ${{ secrets.MODAL_TOKEN_ID }}
+          MODAL_TOKEN_SECRET: ${{ secrets.MODAL_TOKEN_SECRET }}
+          TENSORLAKE_API_KEY: ${{ secrets.TENSORLAKE_API_KEY }}
+          BENCH_N:            ${{ vars.BENCH_N || '10' }}
+          BENCH_REPO:      ${{ github.server_url }}/${{ github.repository }}
+        run: bash run.sh ${{ matrix.provider }}
+
+      - name: Commit results
+        if: always()
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add results/ || true
+          git diff --cached --quiet || git commit -m "bench $(date -u +%F) ${{ matrix.provider }}"
+          git push || true

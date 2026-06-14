@@ -1,0 +1,7 @@
+[submodule "vendor/pjdfstest"]
+	path = vendor/pjdfstest
+	url  = https://github.com/pjd/pjdfstest.git
+
+[submodule "vendor/xfstests"]
+	path = vendor/xfstests
+	url  = https://git.kernel.org/pub/scm/fs/xfs/xfstests-dev.git
