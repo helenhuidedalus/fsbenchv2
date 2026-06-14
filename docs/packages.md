@@ -27,6 +27,10 @@ Timed separately and reported as the `agent install` column.
 
 - @anthropic-ai/sdk
 - openai
+- openclaw
+- ai
+- @google/genai
+- langchain
 
 ---
 
